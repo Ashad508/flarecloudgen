@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const {
   Client,
   GatewayIntentBits,
@@ -16,7 +18,7 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildPresences // required for status tracking
+    GatewayIntentBits.GuildPresences
   ],
   partials: [Partials.Message, Partials.Channel, Partials.GuildMember, Partials.User]
 });
@@ -24,68 +26,44 @@ const client = new Client({
 // ==== CONFIG ====
 const configData = require('./config.json');
 const config = {
-  genChannelId: '1448293260308250684',
-  boosterChannelId: '1448293261688045630',
-  vipChannelId: '1448293263541801175',
-  vouchChannelId: '1448293264951087247',
-  logsChannelId: '1448293304138469516',
-  genBansChannelId: '1448293258760556624',
-  restockChannelId: '1449732006333120625',
+  // === Owner ===
+  ownerId: '1550540531665473699',
+  ownerIds: ['1550540531665473699'],
+
+  // === Channels (from your JSON) ===
+  genChannelId: '1483029114825867367',
+  boosterChannelId: '1483029113341218859',
+  vipChannelId: '1483029112225402973',
+  vouchChannelId: '1483029116629549169',
+  logsChannelId: '1483029182652088350',
+  genBansChannelId: '1483029174552756245',
+  restockChannelId: '1483167512014225590',
+
   emojis: configData.emojis,
 
   statusText: ".gg/W9u8kr2yGc : Free MCFA Generator",
   statusRoleId: "1428026856917045311",
 
   services: {
-    "minecraft": {
-      stockFile: "stock/Minecraft.txt",
-      emoji: "ice_cube",
-      display: "Minecraft Java"
-    },
-    "steam": {
-      stockFile: "stock/Steam.txt",
-      emoji: "ice_cube",
-      display: "Steam"
-    },
-    "crunchyroll": {
-      stockFile: "stock/Crunchyroll.txt",
-      emoji: "ice_cube",
-      display: "Crunchyroll"
-     },
-    "mc_bedrock": {
-      stockFile: "stock/Mc_Bedrock.txt",
-      emoji: "globe",
-      display: "Minecraft Bedrock"
-    },
-    "xbox": {
-      stockFile: "stock/Xbox.txt",
-      emoji: "gold",
-      display: "Xbox"
-    },
-    "donut": {
-      stockFile: "booststock/Donut.txt",
-      emoji: "booster",
-      display: "donut"
-    },
-    "cape": {
-      stockFile: "stock/Cape.txt",
-      emoji: "booster",
-      display: "Cape"
-    },
-    "unbanned": {
-      stockFile: "booststock/Unbanned.txt",
-      emoji: "booster",
-      display: "Unbanned"
-    },
-    "mcfa": {
-      stockFile: "paidstock/Mcfa.txt",
-      emoji: "paid",
-      display: "MCFA Premium"
-    }
+    "minecraft":   { stockFile: "stock/Minecraft.txt",   emoji: "ice_cube", display: "Minecraft Java" },
+    "steam":       { stockFile: "stock/Steam.txt",       emoji: "ice_cube", display: "Steam" },
+    "crunchyroll": { stockFile: "stock/Crunchyroll.txt", emoji: "ice_cube", display: "Crunchyroll" },
+    "mc_bedrock":  { stockFile: "stock/Mc_Bedrock.txt",  emoji: "globe",    display: "Minecraft Bedrock" },
+    "xbox":        { stockFile: "stock/Xbox.txt",        emoji: "gold",     display: "Xbox" },
+    "donut":       { stockFile: "booststock/Donut.txt",  emoji: "booster",  display: "donut" },
+    "cape":        { stockFile: "stock/Cape.txt",        emoji: "booster",  display: "Cape" },
+    "unbanned":    { stockFile: "booststock/Unbanned.txt", emoji: "booster", display: "Unbanned" },
+    "mcfa":        { stockFile: "paidstock/Mcfa.txt",    emoji: "paid",     display: "MCFA Premium" }
   }
 };
 
 client.config = config;
+
+// ==== OWNER CHECK ====
+function isOwner(userId) {
+  return config.ownerIds.includes(userId);
+}
+client.isOwner = isOwner;
 
 // ==== STOCK SYSTEM ====
 const STOCK_PATHS = {
@@ -124,12 +102,14 @@ async function logCommandUsage(message, commandName, args) {
   const logsChannel = message.guild?.channels.cache.get(config.logsChannelId);
   if (!logsChannel) return;
 
+  const ownerFlag = isOwner(message.author.id) ? ' 👑' : '';
+
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
     .setTitle('📝 Command Executed')
     .addFields(
       { name: 'Command', value: `\`$${commandName}\``, inline: true },
-      { name: 'User', value: `${message.author.tag}`, inline: true },
+      { name: 'User', value: `${message.author.tag}${ownerFlag}`, inline: true },
       { name: 'Channel', value: `<#${message.channel.id}>`, inline: true },
       { name: 'Arguments', value: args.length > 0 ? `\`${args.join(' ')}\`` : 'None', inline: false }
     )
@@ -147,14 +127,19 @@ client.on('messageCreate', async (message) => {
   const commandName = args.shift().toLowerCase();
   const command = commands.get(commandName);
 
-  if (command) {
-    try {
-      await command.execute(message, args, client);
-      await logCommandUsage(message, commandName, args);
-    } catch (error) {
-      console.error(error);
-      message.reply('❌ There was an error executing that command!');
-    }
+  if (!command) return;
+
+  // 🔒 Owner-only guard
+  if (command.ownerOnly && !isOwner(message.author.id)) {
+    return message.reply('❌ This command is owner-only.').catch(() => {});
+  }
+
+  try {
+    await command.execute(message, args, client);
+    await logCommandUsage(message, commandName, args);
+  } catch (error) {
+    console.error(error);
+    message.reply('❌ There was an error executing that command!').catch(() => {});
   }
 });
 
@@ -192,9 +177,7 @@ client.once(Events.ClientReady, async () => {
   console.log(`✅ Bot is ready! Logged in as ${client.user.tag}`);
 
   // === BOT WATCHING STATUS ===
-  client.user.setActivity('.gg/wardencore', {
-    type: 3 // WATCHING
-  });
+  client.user.setActivity('.gg/wardencore', { type: 3 });
 
   if (vouchSystem && vouchSystem.slashCommands) {
     try {
@@ -215,6 +198,4 @@ client.once(Events.ClientReady, async () => {
   }
 });
 
-
-client.login("MTU2MDk3MDMyNjQwMDA0MTAyMA.Gg04OH.EL7H780oKRmxnKxtB18uhLfSubv7_atWdADY9o");
-
+client.login(process.env.DISCORD_TOKEN);
