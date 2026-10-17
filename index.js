@@ -192,7 +192,7 @@ client.once(Events.ClientReady, async () => {
   console.log(`✅ Bot is ready! Logged in as ${client.user.tag}`);
 
   // === BOT WATCHING STATUS ===
-  client.user.setActivity('.gg/wardencloud', {
+  client.user.setActivity('.gg/wardencore', {
     type: 3 // WATCHING
   });
 
@@ -216,5 +216,5 @@ client.once(Events.ClientReady, async () => {
 });
 
 
-client.login("MTQyODY2MDY2MjYwMjU2MzYyNg.G1-_fv.zGmIe68yHJVbsrRnt_jhTwwiymUD0SiIbtMvMU");
+client.login("MTU2MDk3MDMyNjQwMDA0MTAyMA.Gg04OH.EL7H780oKRmxnKxtB18uhLfSubv7_atWdADY9o");
 
