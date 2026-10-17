@@ -1,13 +1,13 @@
 
 {
   "channelIds": {
-    "genChannelId": "1448293260308250684",
-    "boosterChannelId": "1448293261688045630",
-    "vipChannelId": "1448293263541801175",
-    "vouchChannelId": "1448293264951087247",
-    "logsChannelId": "1448293304138469516",
-    "genBansChannelId": "1448293258760556624",
-    "restockChannelId": "1449732006333120625"
+    "genChannelId": "1483029114825867367",
+    "boosterChannelId": "1483029113341218859",
+    "vipChannelId": "1483029112225402973",
+    "vouchChannelId": "1483029116629549169",
+    "logsChannelId": "1483029182652088350",
+    "genBansChannelId": "1483029174552756245",
+    "restockChannelId": "1483167512014225590"
   },
   "emojis": {
     "ice_cube": "<:IceCube:1428723593461633147>",
